@@ -1,0 +1,275 @@
+<template>
+  <div class="content">
+    <!-- 热门图书 -->
+    <div class="chart-container hotbook">
+      <el-card shadow="hover">
+        <template #header>
+          <div class="chart-title"><i class="el-icon-tickets"></i>热门图书</div>
+        </template>
+        <div id="main1" class="chart"></div>
+      </el-card>
+    </div>
+
+    <!-- 点击量排行 -->
+    <div class="chart-container browser">
+      <el-card shadow="hover">
+        <template #header>
+          <div class="chart-title"><i class="el-icon-data-line"></i>点击量排行</div>
+        </template>
+        <div id="main2" class="chart"></div>
+      </el-card>
+    </div>
+
+    <!-- 评分排行 -->
+    <div class="chart-container bookRating">
+      <el-card shadow="hover">
+        <template #header>
+          <div class="chart-title"><i class="el-icon-star-on"></i>评分排行</div>
+        </template>
+        <div id="main3" class="chart"></div>
+      </el-card>
+    </div>
+
+    <!-- 热门主题 -->
+    <div class="chart-container bookTopic">
+      <el-card shadow="hover">
+        <template #header>
+          <div class="chart-title"><i class="el-icon-chat-dot-round"></i>热门主题</div>
+        </template>
+        <div id="main4" class="chart"></div>
+      </el-card>
+    </div>
+
+    <!-- 词云 -->
+    <div style="width: 100%;" class="chart-container wordCloud">
+      <el-card shadow="hover">
+        <template #header>
+          <div class="chart-title"><i class="el-icon-picture-outline"></i>词云</div>
+        </template>
+        <div id="main5" class="chart"></div>
+      </el-card>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import * as echarts from 'echarts';
+import 'echarts-wordcloud';
+import { onMounted, ref } from 'vue';
+import { getEChartsOption1 } from '@/echartsConfig';
+import { getEChartsOption2 } from '@/echartsConfig';
+import { getEChartsOption3 } from '@/echartsConfig';
+import { getEChartsOption4 } from '@/echartsConfig';
+import { getEChartsOption5 } from '@/echartsConfig';
+import { getAllCollectBook } from '@/api/getAllCollectBook';
+import { getAllBrowse } from '@/api/getAllBrowse';
+import { getAllRating } from '@/api/getRating';
+import { getbookTopic } from '@/api/getbookTopic';
+import { getWordcloud } from '@/api/getWordcloud';
+let chartDom1 = ref<HTMLElement | null>(null);
+let chartDom2 = ref<HTMLElement | null>(null);
+let chartDom3 = ref<HTMLElement | null>(null);
+let chartDom4 = ref<HTMLElement | null>(null);
+let chartDom5 = ref<HTMLElement | null>(null);
+let myChart1: echarts.ECharts | null = null;
+let myChart2: echarts.ECharts | null = null;
+let myChart3: echarts.ECharts | null = null;
+let myChart4: echarts.ECharts | null = null;
+let myChart5: echarts.ECharts | null = null;
+let collect_data = ref([])
+let browser_data_x = ref([])
+let browser_data_y = ref([])
+let rating_data_x = ref([])
+let rating_data_y = ref([])
+let topic_data = ref([])
+let word_data = ref([])
+function getcollectdata(collections) {
+  // 使用 reduce 统计每本书籍的出现次数
+  const bookCounts = collections.reduce((acc, curr) => {
+    if (!acc[curr.Book_Name]) {
+      acc[curr.Book_Name] = 0;
+    }
+    acc[curr.Book_Name] += 1;
+    return acc;
+  }, {});
+
+  // 将统计结果转换为 [{Book_Name:"", value:"}] 格式的数组
+  const result = Object.keys(bookCounts).map(key => ({
+    name: key,
+    value: bookCounts[key]
+  }));
+  return result
+}
+function getbrowserdata(browsers) {
+
+  const bookCounts = browsers.reduce((acc, curr) => {
+    if (!acc[curr.Book_Name]) {
+      acc[curr.Book_Name] = 0;
+    }
+    acc[curr.Book_Name] += 1;
+    return acc;
+  }, {});
+
+  // 将统计结果转换为 [{Book_Name:"", value:"}] 格式的数组
+  const result = Object.keys(bookCounts).map(key => ({
+    name: key,
+    value: bookCounts[key]
+  }));
+  // return result
+  result.sort((a, b) => {
+    return b.value - a.value
+  })
+  // console.log(result);
+  for (const element of result) {
+    browser_data_x.value.push(element.name)
+    browser_data_y.value.push(element.value)
+  }
+
+}
+function getRatingdata(ratings) {
+  // console.log(ratings);
+  ratings.sort((a, b) => {
+    return b.Rating - a.Rating
+  })
+  for (const element of ratings) {
+    rating_data_x.value.push(element.Book_Name)
+    rating_data_y.value.push(element.Rating)
+  }
+
+}
+function getTopicdata(topic) {
+  console.log(topic);
+  let arr = []
+  let bookarr = []
+  for (const element of topic) {
+    arr.push(element.Topic.split(" "))
+  }
+  for (const element of arr) {
+    for (const element1 of element) {
+      bookarr.push(element1)
+    }
+  }
+  let a = bookarr.reduce((acc, val) => {
+    if (acc[val] === undefined) {
+      acc[val] = 1;
+    } else {
+      acc[val]++;
+    }
+    return acc;
+  }, {})
+  const result = Object.keys(a).map(key => ({
+    name: key,
+    value: a[key]
+  }));
+  console.log(result);
+  
+  return result
+
+}
+
+onMounted(async () => {
+  let res1 = await getAllCollectBook()
+  let res2 = await getAllBrowse()
+  let res3 = await getAllRating()
+  let res4 = await getbookTopic()
+  let res5 = await getWordcloud()
+
+
+  collect_data.value = getcollectdata(res1)
+  getbrowserdata(res2)
+  getRatingdata(res3)
+  topic_data.value = getTopicdata(res4)
+  word_data.value = res5
+
+
+
+  chartDom1.value = document.getElementById('main1');
+  chartDom2.value = document.getElementById('main2');
+  chartDom3.value = document.getElementById('main3');
+  chartDom4.value = document.getElementById('main4');
+  chartDom5.value = document.getElementById('main5');
+  if (chartDom1.value) {
+    myChart1 = echarts.init(chartDom1.value);
+    const option1 = getEChartsOption1(collect_data.value)
+    if (myChart1) {
+      myChart1.setOption(option1);
+    }
+  }
+  if (chartDom2.value) {
+    myChart2 = echarts.init(chartDom2.value);
+    const option2 = getEChartsOption2(browser_data_x.value, browser_data_y.value)
+    if (myChart2) {
+      myChart2.setOption(option2);
+    }
+  }
+  if (chartDom3.value) {
+    myChart3 = echarts.init(chartDom3.value);
+    const option3 = getEChartsOption3(rating_data_x.value, rating_data_y.value)
+    if (myChart3) {
+      myChart3.setOption(option3);
+    }
+  }
+  if (chartDom4.value) {
+    myChart4 = echarts.init(chartDom4.value);
+    const option4 = getEChartsOption4(topic_data.value)
+    if (myChart4) {
+      myChart4.setOption(option4);
+    }
+  }
+  if (chartDom5.value) {
+    myChart5 = echarts.init(chartDom5.value);
+    const option5 = getEChartsOption5(word_data.value)
+    if (myChart5) {
+      myChart5.setOption(option5);
+    }
+  }
+});
+</script>
+
+<style lang="scss" scoped>
+$primary-color: #409EFF;
+$background-color: #F5F7FA;
+$card-background-color: #FFFFFF;
+$border-radius: 8px;
+
+.content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  padding: 20px;
+  background-color: $background-color;
+}
+
+.chart-container {
+  width: calc(50% - 20px); // 占据一半宽度并减去边距
+  margin-bottom: 20px;
+}
+
+.el-card {
+  width: 100%;
+  border-radius: $border-radius;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  .chart-title {
+    height: 10px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    color: $primary-color;
+    i {
+      margin-right: 8px;
+      font-size: 24px;
+    }
+  }
+
+  .chart {
+    width: 100%;
+    height: 280px;
+  }
+}
+</style>

@@ -1,0 +1,108 @@
+<template>
+  <el-row :gutter="20">
+    <el-col :span="6"><div class="grid-content ep-bg-purple" /></el-col>
+    <el-col :span="6"><div class="grid-content ep-bg-purple" /></el-col>
+    <el-col :span="6"><div class="grid-content ep-bg-purple" /></el-col>
+    <el-col :span="6"><div class="grid-content ep-bg-purple" /></el-col>
+  </el-row>
+
+
+</template>
+
+<script setup lang="ts">
+import * as echarts from 'echarts';
+import { onMounted, ref } from 'vue';
+// import { getBooks } from '@/api/getBooks';
+
+let chartDom = ref<HTMLElement | null>(null);
+let myChart: echarts.ECharts | null = null;
+
+onMounted(() => {
+  chartDom.value = document.getElementById('main');
+  if (chartDom) {
+    myChart = echarts.init(chartDom.value);
+    const option = {
+      tooltip: {
+        trigger: 'item'
+      },
+
+      series: [
+        {
+          name: 'Access From',
+          type: 'pie',
+          radius: ['40%', '70%'],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 10,
+            borderColor: '#fff',
+            borderWidth: 2
+          },
+          label: {
+            show: false,
+            position: 'center'
+          },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: 10,
+              fontWeight: 'bold'
+            }
+          },
+          labelLine: {
+            show: false
+          },
+          data: [
+            { value: 1048, name: 'Search Engine' },
+            { value: 735, name: 'Direct' },
+            { value: 580, name: 'Email' },
+            { value: 484, name: 'Union Ads' },
+            { value: 300, name: 'Video Ads' }
+          ]
+        }
+      ]
+    };
+
+    if (myChart) {
+      myChart.setOption(option);
+    }
+
+    // Uncomment the following lines when you want to fetch data and update the chart
+    /*
+    getBooks().then(res => {
+      // Assuming res is an array of objects with `value` and `name` properties
+      if (myChart && Array.isArray(res)) {
+        myChart.setOption({
+          series: [{
+            // Update the data field with the fetched data
+            data: res
+          }]
+        });
+      }
+    });
+    */
+  }
+});
+</script>
+
+<style lang="scss" scoped>
+.el-header,
+.el-footer {
+  display: flex;
+  justify-content:space-evenly;
+  // background-color: #b3c0d1;
+  height: 20px;
+  color: var(--el-text-color-primary);
+  text-align: center;
+  line-height: 20px;
+
+  span {
+    font-size: 25px;
+  }
+}
+.hotbook {
+  width: 250px;
+  height: 250px;
+  position: relative;
+  background-color: aqua;
+}
+</style>

@@ -1,0 +1,200 @@
+<template>
+  <div class="common-layout">
+    <el-container>
+      <el-header>
+        <el-row :gutter="20">
+          <el-col :span="21">
+            <div class="grid-content ep-bg-purple" />
+          </el-col>
+          <el-col :span="3">
+            <el-button @click="drawer2 = true" type="primary">
+              添加图书<el-icon class="el-icon--right">
+                <Upload />
+              </el-icon>
+            </el-button>
+          </el-col>
+        </el-row>
+
+      </el-header>
+      <el-main>
+        <el-table :data="filterTableData" style="width: 100%">
+          <el-table-column type="index" />
+          <el-table-column>
+            <template #default="{ row }">
+              <!-- {{ row }} -->
+
+              <img :src="row.Img_Url" style="width: 50px;" alt="">
+              <!-- <img :src="../../static/" alt=""> -->
+              {{ }}
+            </template>
+          </el-table-column>
+          <el-table-column label="书名" prop="Book_Name" />
+          <el-table-column align="right">
+            <template #header>
+              <el-input v-model="search" size="small" placeholder="Type to search" />
+            </template>
+            <template #default="scope">
+              <el-button size="small" @click="handleEdit(scope.$index, scope.row)">
+                Edit
+              </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">
+                Delete
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-main>
+    </el-container>
+    <el-drawer v-model="drawer2" :direction="direction">
+      <template>
+        <el-form :model="form" label-width="auto" style="max-width: 600px">
+          <el-form-item label="Activity name">
+            <el-input v-model="form.name" />
+          </el-form-item>
+          <el-form-item label="Activity zone">
+            <el-select v-model="form.region" placeholder="please select your zone">
+              <el-option label="Zone one" value="shanghai" />
+              <el-option label="Zone two" value="beijing" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="Activity time">
+            <el-col :span="11">
+              <el-date-picker v-model="form.date1" type="date" placeholder="Pick a date" style="width: 100%" />
+            </el-col>
+            <el-col :span="2" class="text-center">
+              <span class="text-gray-500">-</span>
+            </el-col>
+            <el-col :span="11">
+              <el-time-picker v-model="form.date2" placeholder="Pick a time" style="width: 100%" />
+            </el-col>
+          </el-form-item>
+          <el-form-item label="Instant delivery">
+            <el-switch v-model="form.delivery" />
+          </el-form-item>
+          <el-form-item label="Activity type">
+            <el-checkbox-group v-model="form.type">
+              <el-checkbox value="Online activities" name="type">
+                Online activities
+              </el-checkbox>
+              <el-checkbox value="Promotion activities" name="type">
+                Promotion activities
+              </el-checkbox>
+              <el-checkbox value="Offline activities" name="type">
+                Offline activities
+              </el-checkbox>
+              <el-checkbox value="Simple brand exposure" name="type">
+                Simple brand exposure
+              </el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="Resources">
+            <el-radio-group v-model="form.resource">
+              <el-radio value="Sponsor">Sponsor</el-radio>
+              <el-radio value="Venue">Venue</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="Activity form">
+            <el-input v-model="form.desc" type="textarea" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="onSubmit">Create</el-button>
+            <el-button>Cancel</el-button>
+          </el-form-item>
+        </el-form>
+      </template>
+      <template #footer>
+        <div style="flex: auto">
+          <el-button @click="cancelClick">cancel</el-button>
+          <el-button type="primary" @click="confirmClick">confirm</el-button>
+        </div>
+      </template>
+    </el-drawer>
+  </div>
+
+</template>
+<script setup lang="ts">
+import { onMounted, ref, computed } from 'vue';
+import { getBooks } from '@/api/getBooks';
+import { ElMessageBox, DrawerProps } from 'element-plus'
+
+const search = ref('')
+const filterTableData = computed(() =>
+  tableData.value.filter(
+    (data) =>
+      !search.value ||
+      data.Book_Name.toLowerCase().includes(search.value.toLowerCase())
+  )
+)
+const handleEdit = (index: number, row) => {
+  console.log(index, row)
+}
+const handleDelete = (index: number, row) => {
+  console.log(index, row)
+}
+
+const tableData = ref([])
+onMounted(async () => {
+  // console.log(1);
+  let res = await getBooks()
+  tableData.value = res
+  console.log(res);
+})
+const drawer2 = ref(false)
+const direction = ref<DrawerProps['direction']>('rtl')
+const radio1 = ref('Option 1')
+function cancelClick() {
+  drawer2.value = false
+}
+function confirmClick() {
+  ElMessageBox.confirm(`Are you confirm to chose ${radio1.value} ?`)
+    .then(() => {
+      drawer2.value = false
+    })
+    .catch(() => {
+      // catch error
+    })
+}
+
+</script>
+<style lang="scss" scoped>
+.el-header,
+.el-footer {
+  // background-color: #b3c0d1;
+  height: 20px;
+  color: var(--el-text-color-primary);
+  text-align: center;
+  line-height: 20px;
+
+  span {
+    font-size: 25px;
+  }
+}
+
+.el-aside {
+  height: 730px;
+  background-color: #d3dce6;
+  color: var(--el-text-color-primary);
+  text-align: center;
+  line-height: 200px;
+}
+
+.el-main {
+  background-color: #e9eef3;
+  color: var(--el-text-color-primary);
+  text-align: center;
+  line-height: 160px;
+}
+
+body>.el-container {
+  margin-bottom: 40px;
+}
+
+.el-container:nth-child(5) .el-aside,
+.el-container:nth-child(6) .el-aside {
+  line-height: 260px;
+}
+
+.el-container:nth-child(7) .el-aside {
+  line-height: 320px;
+}
+</style>
